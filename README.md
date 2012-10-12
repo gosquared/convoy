@@ -10,6 +10,7 @@ This means that you can have multiple job publishers and multiple consumers for 
     npm install redis-convoy
 
 ### Usage
+
 ````
 var Convoy = require('redis-convoy');
 
