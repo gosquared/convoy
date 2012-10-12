@@ -139,3 +139,24 @@ describe('When multiple convoys process the same queue', function(){
     done();
   });
 });
+
+describe('stats', function(){
+  function testCount(done, err, count){
+    should.not.exist(err);
+    should.exist(count);
+    count.should.be.a('number');
+    done();
+  }
+  it('can count queued', function(done){
+    var q = Convoy.createQueue('q');
+    q.countQueued(testCount.bind(this, done));
+  });
+  it('can count processing', function(done){
+    var q = Convoy.createQueue('q');
+    q.countProcessing(testCount.bind(this, done));
+  });
+  it('can count failed', function(done){
+    var q = Convoy.createQueue('q');
+    q.countFailed(testCount.bind(this, done));
+  });
+});
