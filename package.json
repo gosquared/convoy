@@ -1,5 +1,5 @@
 {
-  "name": "convoy",
+  "name": "redis-convoy",
   "version": "0.0.1",
   "description": "Redis-backed job queueing",
   "main": "lib/convoy.js",
