@@ -20,6 +20,8 @@ describe('Setting up a queue', function(){
 
   it('Can override redis client', function(done){
     Convoy.redis.createClient = function(){
+      var client = redis.createClient();
+      client.select(config.redis.database);
       client.testProperty = 'cheese';
       return client;
     };
@@ -60,10 +62,13 @@ describe('Processing jobs', function(){
   var q, job, processed;
   before(function(done){
     q = Convoy.createQueue('q');
-    q.process(function(j, p){
+    var returned = false;
+    var cb = function(j, p){
       job = j, processed = p;
       done();
-    });
+      q.close();
+    };
+    q.process(cb);
   });
 
   it('invokes callback with job', function(done){
