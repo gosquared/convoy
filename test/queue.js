@@ -135,14 +135,18 @@ describe('Processing jobs', function(){
 describe('When a job gets jammed', function(){
   var job, q, worker;
 
-  // Simulate a b0rked worker
-  before(function(done){
+  var setUpJammedJob = function(done){
     job = new Convoy.Job(98);
     q = Convoy.createQueue('faultyWorkers');
     q.addJob(job, function(){
       worker = new Convoy.Worker(q, job);
       worker.processing(done);
     });
+  }
+
+  // Simulate a b0rked worker
+  before(function(done){
+    setUpJammedJob(done);
   });
 
   it('leaves an entry in the processing list', function(done){
@@ -180,8 +184,14 @@ describe('When a job gets jammed', function(){
   });
 
   it('can set jam guard', function(done){
-    q.jamGuard(5000);
-    done();
+    setUpJammedJob(function(){
+      q.jamGuard(0.1, function(err, jammedJobs){
+        should.not.exist(err);
+        should.exist(jammedJobs);
+        jammedJobs.should.have.length(1);
+        done();
+      });
+    });
   });
 });
 
