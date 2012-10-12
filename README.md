@@ -35,9 +35,8 @@ q.process(function(job, done){
 ### Running tests
 Make sure you have a local redis running on localhost:6379 (or change these settings in config/default.js), then run:
 
-```bash $
-make test
-```
+    make test
+
 
 #### Inspiration
 
