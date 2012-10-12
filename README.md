@@ -32,4 +32,13 @@ q.process(function(job, done){
 
 ````
 
+### Running tests
+Make sure you have a local redis running on localhost:6379 (or change these settings in config/default.js), then run:
+
+```bash $
+make test
+```
+
+#### Inspiration
+
 Convoy was inspired by TJ Holowaychuk's [kue](https://github.com/LearnBoost/kue) module. I was using Kue, but was caught up with some problems when workers did not fully ack the job, causing it to get stuck in the active/inactive lists. Additionally, kue did not seem to offer convenient support for ensuring unique jobs only get queued once, which is the main focus of convoy.
