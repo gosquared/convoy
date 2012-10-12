@@ -132,6 +132,59 @@ describe('Processing jobs', function(){
   });
 });
 
+describe('When a job gets jammed', function(){
+  var job, q, worker;
+
+  // Simulate a b0rked worker
+  before(function(done){
+    job = new Convoy.Job(98);
+    q = Convoy.createQueue('faultyWorkers');
+    q.addJob(job, function(){
+      worker = new Convoy.Worker(q, job);
+      worker.processing(done);
+    });
+  });
+
+  it('leaves an entry in the processing list', function(done){
+    client.zscore(helpers.key(q.name+':processing'), job.id, function(err, score){
+      should.not.exist(err);
+      should.exist(score);
+      done();
+    });
+  });
+
+  it('can clear jammed jobs when idle for a certain time', function(done){
+    q.clearJammedJobs(0, function(err, members){
+      should.not.exist(err);
+      should.exist(members);
+      members.should.have.length(1);
+      done();
+    });
+  });
+
+  it('job removed from the committed set', function(done){
+    client.sismember(helpers.key(q.name+':committed'), job.id, function(err, isMember){
+      should.not.exist(err);
+      should.exist(isMember);
+      isMember.should.equal(0);
+      done();
+    });
+  });
+
+  it('removed from the processing set', function(done){
+    client.zscore(helpers.key(q.name+':processing'), job.id, function(err, score){
+      should.not.exist(err);
+      should.not.exist(score);
+      done();
+    });
+  });
+
+  it('can set jam guard', function(done){
+    q.jamGuard(5000);
+    done();
+  });
+});
+
 describe('When multiple convoys process the same queue', function(){
   var numConvoys = 10, queues = [], jobIDs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
   var committedIDs = [];
