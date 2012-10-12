@@ -31,15 +31,27 @@ describe('Setting up a queue', function(){
 });
 
 describe('Enqueing jobs', function(done){
-  it('places the job in the queued set', function(done){
-    var q = Convoy.createQueue('q');
-    var job = new Convoy.Job(1);
-    q.addJob(job, function(){
-      client.lrange(helpers.key(q.name+':queued'), 0, -1, function(err, list){
-        should.not.exist(err);
-        list.should.include(''+job.id);
-        done();
-      });
+  var q, job;
+  before(function(done){
+    q = Convoy.createQueue('q');
+    job = new Convoy.Job(1);
+    q.addJob(job, done);
+  });
+
+  it('places the job in the committed set', function(done){
+    client.sismember(helpers.key(q.name+':committed'), job.id, function(err, isMember){
+      should.not.exist(err);
+      should.exist(isMember);
+      isMember.should.equal(1);
+      done();
+    });
+  });
+
+  it('places the job in the queued list', function(done){
+    client.lrange(helpers.key(q.name+':queued'), 0, -1, function(err, list){
+      should.not.exist(err);
+      list.should.include(''+job.id);
+      done();
     });
   });
 });
@@ -85,5 +97,45 @@ describe('Processing jobs', function(){
         done();
       });
     });
+  });
+});
+
+describe('When multiple convoys process the same queue', function(){
+  var numConvoys = 10, queues = [], jobIDs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+  var committedIDs = [];
+
+  function setUpConvoy(queues){
+    var c = Convoy.createQueue('q');
+    queues.push(c);
+  }
+
+
+  before(function(done){
+    for(var i = numConvoys; i--;){
+      setUpConvoy(queues);      
+    }
+
+    var pending = queues.length * jobIDs.length;
+
+    function iterator(){
+      if(!--pending)
+        done();
+    }
+
+    queues.forEach(function(queue, i){
+      for(var i = jobIDs.length; i--;){
+        var job = new Convoy.Job(jobIDs[i]);
+        queue.addJob(job, iterator);
+      }
+    });
+  });
+
+  it('they should only queue each unique job once', function(done){
+    client.llen(helpers.key(queues[0].name+':queued'), function(err, length){
+      should.not.exist(err);
+      should.exist(length);
+      length.should.equal(jobIDs.length);
+    });
+    done();
   });
 });
