@@ -7,6 +7,8 @@ module.exports = {
 
 	keys: {
 		prefix: 'cv:',
+    logTTL: 86400,
+
 		queued: 'queued',
 		processing: 'processing',
 		failed: 'failed'

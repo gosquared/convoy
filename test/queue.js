@@ -79,6 +79,7 @@ describe('Processing jobs', function(){
   it('removes job from queued list', function(done){
     client.lrange(helpers.key(q.name+':queued'), 0, -1, function(err, list){
       should.not.exist(err);
+      should.exist(list);
       list.should.not.include(''+job.id);
       done();
     });
@@ -93,14 +94,40 @@ describe('Processing jobs', function(){
     });
   });
 
+  var errorMsg = 'holy crickets Watman, what happened?';
+
   it('places job in fail list if callback invoked with error', function(done){
-    processed('ohnoes, something went wrong', function(){
+    processed(errorMsg, function(){
       client.zscore(helpers.key(q.name+':failed'), job.id, function(err, numFails){
         should.not.exist(err);
         should.exist(numFails);
         numFails.should.equal(''+job.id);
         done();
       });
+    });
+  });
+
+  it('failed jobs with error message should get logged', function(done){
+    var now = helpers.time();
+    var dayStart = now - (now % 86400);
+    var key = helpers.key(q.name+':errorLog.'+dayStart);
+    client.lrange(key, 0, -1, function(err, log){
+      should.not.exist(err);
+      should.exist(log);
+      log.should.include(errorMsg);
+      done();
+    });
+  });
+
+  it('failed log should have ttl', function(done){
+    var now = helpers.time();
+    var dayStart = now - (now % 86400);
+    var key = helpers.key(q.name+':errorLog.'+dayStart);
+    client.ttl(key, function(err, ttl){
+      should.not.exist(err);
+      should.exist(ttl);
+      ttl.should.be.within(0, config.keys.logTTL);
+      done();
     });
   });
 });
