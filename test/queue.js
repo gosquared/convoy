@@ -13,12 +13,8 @@ before(function(done){
 });
 
 describe('Setting up a queue', function(){
-	it('Sets up queue object', function(done){
-		var q = Convoy.createQueue('rollin');
-    done();
-	});
 
-  it('Can override redis client', function(done){
+  it('can override redis client', function(done){
     Convoy.redis.createClient = function(){
       var client = redis.createClient();
       client.select(config.redis.database);
@@ -30,12 +26,44 @@ describe('Setting up a queue', function(){
     q.client.testProperty.should.equal('cheese');
     done();
   });
+
+  it('can close the queue gracefully when not processing', function(done){
+    var q = Convoy.createQueue('postOffice');
+    q.close(done);
+  });
+
+  it('can stop processing the queue', function(done){
+    var q = Convoy.createQueue('duckies');
+    var received = 0;
+    q.startProcessing(function(){
+      if(++received > 1)
+        throw new Error('We should only have received one job');
+
+      done();
+    });
+
+    // Since queue is in blocked state, it will only stop processing once
+    // it has received its next job. If you want to stop it receiving any
+    // further jobs, call q.close();
+    q.stopProcessing();
+
+    // Stops processing after the first job is queued
+    q.addJob(new Convoy.Job(1));
+    q.addJob(new Convoy.Job("Job IDs can be strings too"));
+  });
+
+  it('but does not lose the unprocessed job', function(done){
+    var q = Convoy.createQueue('duckies');
+    q.startProcessing(function(job, complete){
+      complete(null, done);
+    });
+  });
 });
 
 describe('Enqueing jobs', function(done){
   var q, job;
   before(function(done){
-    q = Convoy.createQueue('q');
+    q = Convoy.createQueue('jamesBond');
     job = new Convoy.Job(1);
     q.addJob(job, done);
   });
@@ -61,14 +89,15 @@ describe('Enqueing jobs', function(done){
 describe('Processing jobs', function(){
   var q, job, processed;
   before(function(done){
-    q = Convoy.createQueue('q');
+    q = Convoy.createQueue('the22ndLetter');
     var returned = false;
     var cb = function(j, p){
       job = j, processed = p;
       done();
-      q.close();
     };
-    q.process(cb);
+
+    q.startProcessing(cb);
+    q.addJob(new Convoy.Job(1));
   });
 
   it('invokes callback with job', function(done){
@@ -142,7 +171,7 @@ describe('When a job gets jammed', function(){
       worker = new Convoy.Worker(q, job);
       worker.processing(done);
     });
-  }
+  };
 
   // Simulate a b0rked worker
   before(function(done){
