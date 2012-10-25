@@ -1,6 +1,6 @@
 {
   "name": "redis-convoy",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Redis-backed job queueing",
   "main": "lib/convoy.js",
   "scripts": {
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/thedeveloper/convoy"
+    "url": "https://github.com/gosquared/convoy"
   },
   "keywords": [
     "job",
