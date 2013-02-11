@@ -1,6 +1,6 @@
 {
   "name": "redis-convoy",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Redis-backed job queueing",
   "main": "lib/convoy.js",
   "scripts": {
@@ -21,7 +21,8 @@
   "dependencies": {
     "config": "~0.4.17",
     "debug": "~0.7.0",
-    "redis": "https://github.com/mranney/node_redis/tarball/v0.7.2"
+    "redis": "https://github.com/gosquared/node_redis/tarball/master",
+    "hiredis": "~0.1.14"
   },
   "devDependencies": {
     "mocha": "~1.6.0",
