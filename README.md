@@ -33,6 +33,23 @@ q.process(function(job, done){
 
 ````
 
+### Extended Usage
+Updated logic to handle passing of functions into the Redis-Object for processing by the server.
+````
+
+var q = Convoy.createQueue('monsterTrucks');
+
+// Setup Job
+var JobID = 1;
+var job = new Convoy.Job(jobID, function(){
+    console.log("run this code when you execute this job");
+})
+
+// Add to Queue
+q.addJob(job);
+
+````
+
 ### Running tests
 Make sure you have a local redis running on localhost:6379 (or change these settings in config/default.js), then run:
 
