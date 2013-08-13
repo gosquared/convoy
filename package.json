@@ -20,9 +20,9 @@
   "license": "MIT",
   "dependencies": {
     "config": "~0.4.17",
-    "debug": "~0.7.0",
-    "redis": "https://github.com/gosquared/node_redis/tarball/master",
-    "hiredis": "~0.1.14"
+    "debug": "~0.7.2",
+    "hiredis": "~0.1.15",
+    "redis": "~0.8.4"
   },
   "devDependencies": {
     "mocha": "~1.6.0",
