@@ -236,7 +236,7 @@ describe('When multiple convoys process the same queue', function(){
 
   before(function(done){
     for(var i = numConvoys; i--;){
-      setUpConvoy(queues);      
+      setUpConvoy(queues);
     }
 
     var pending = queues.length * jobIDs.length;
