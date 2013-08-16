@@ -59,7 +59,7 @@ Make sure you have a local redis running on localhost:6379 (or change these sett
 ### TODO
 Potential features to come:
 
-* Job payload: Store additional data with a job. ProTip: in the meantime try ```javascript var jobID = JSON.stringify(obj);```
+* Job payload: Store additional data with a job. ProTip: in the meantime try `javascript var jobID = JSON.stringify(obj);`
 
 #### Inspiration
 
