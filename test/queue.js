@@ -84,6 +84,17 @@ describe('Enqueing jobs', function(done){
       done();
     });
   });
+
+  it('only queues the same job once', function(done){
+    q.addJob(job, function(err){
+      err.should.equal('committed');
+      client.llen(helpers.key(q.name+':queued'), function(err, listLength){
+        should.not.exist(err);
+        (+listLength).should.equal(1);
+        done();
+      });
+    });
+  });
 });
 
 describe('Processing jobs', function(){
@@ -92,7 +103,8 @@ describe('Processing jobs', function(){
     q = Convoy.createQueue('the22ndLetter');
     var returned = false;
     var cb = function(j, p){
-      job = j, processed = p;
+      job = j;
+      processed = p;
       done();
     };
 
