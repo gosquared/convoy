@@ -63,7 +63,11 @@ describe('Setting up a queue', function(){
 describe('Enqueing jobs', function(done){
   var q, job;
   before(function(done){
-    q = Convoy.createQueue('jamesBond');
+    var opts = {
+      concurrentWorkers: 1
+    };
+
+    q = Convoy.createQueue('jamesBond', opts);
     job = new Convoy.Job(1);
     q.addJob(job, done);
   });
@@ -86,14 +90,26 @@ describe('Enqueing jobs', function(done){
   });
 
   it('only queues the same job once', function(done){
-    q.addJob(job, function(err){
-      err.should.equal('committed');
+    q.addJob(job, function(err, status){
+      should.not.exist(err);
+      status.should.equal('committed');
       client.llen(helpers.key(q.name+':queued'), function(err, listLength){
         should.not.exist(err);
         (+listLength).should.equal(1);
         done();
       });
     });
+  });
+
+  it('only queues processing jobs once', function(done){
+    q.startProcessing(function(job, jobDone){
+      q.addJob(job, function(err, status){
+        should.not.exist(err);
+        status.should.equal('processing');
+        done();
+      });
+    });
+    q.stopProcessing();
   });
 });
 
@@ -279,7 +295,7 @@ describe('When multiple convoys process the same queue', function(){
 });
 
 describe('When a job is not completed within the configured timeout', function(){
-  var q, job, processed;
+  var q;
   var jobTimeout = 1;
 
   before(function(done){
@@ -305,7 +321,36 @@ describe('When a job is not completed within the configured timeout', function()
       count.should.equal(1);
       done();
     });
-    q.workersRunning.should.equal(0);
+  });
+});
+
+describe('Concurrency', function(){
+  var q;
+  var concurrentWorkers = 20;
+  var numJobs = concurrentWorkers*4;
+
+  before(function(done){
+    var opts = {
+      concurrentWorkers: concurrentWorkers
+    };
+
+    q = Convoy.createQueue('manyWorkers', opts);
+    var pending = numJobs;
+    for (var i = 0; i < numJobs; i++){
+      q.addJob(new Convoy.Job(i), function(err){
+        should.not.exist(err);
+        if(!--pending) return done();
+      });
+    }
+  });
+
+  it('spawns up to configured maximum concurrent workers', function(done){
+    var pending = numJobs;
+    q.startProcessing(function(job, jobDone){
+      (q.workersRunning <= concurrentWorkers).should.equal(true);
+      if(!--pending) return done();
+      jobDone();
+    });
   });
 });
 

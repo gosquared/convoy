@@ -14,13 +14,13 @@ Once the job is processed it is removed from the committed list and can be queue
 
 ##### Options
 
-* **Concurrency**: Maximum number of jobs that can be processing at the same time
+* **Concurrent workers**: Maximum number of jobs that can be processing at the same time
 * **Job Timeout**: If your function takes more than this time to process a job, the job will be marked as failed
 
 Example:
 ```javascript
 var opts = {
-  concurrency: 10, // Spawn up to a maximum of 10 concurrent workers
+  concurrentWorkers: 10, // Spawn up to a maximum of 10 concurrent workers
   jobTimeout: 2000 // If a worker does not finish within this time (in ms), its job will be considered failed
 };
 ```
@@ -32,7 +32,7 @@ var Convoy = require('redis-convoy');
 
 // Set up options
 var opts = {
-  concurrency: 10,
+  concurrentWorkers: 10,
   jobTimeout: 2000
 };
 
