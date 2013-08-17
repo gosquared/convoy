@@ -1,24 +1,31 @@
 ## Convoy
 
-Convoy is a Node.JS module for working with a Redis-backed job queue.
+Convoy is a Node.JS module for creating job queues, publishing jobs to them, and consuming jobs from them using any number of workers running on any number of servers. It is designed as a centralised message bus through which you can connect loosely coupled applications that need to break up and delegate their workload across multiple workers on potentially many different machines.
 
-It is designed to be distributed and atomic, orchestrating the queuing, delegation and processing of jobs with unique IDs.
+Convoy uses Redis as its storage medium.
 
-This means that you can have multiple job publishers and multiple consumers for the same queues, even across many servers, and convoy will ensure that unique jobs only get queued once at a time, and delegated to a single worker until queued again.
+#### Jobs
+In Convoy, jobs are simply unique IDs. Each unique ID can only exist once within the queue. When a job is published to a queue, convoy first checks if has already been added to the queue. This is done via the committed list. If the job ID exists in the committed list then it has already been published and will be discarded. Otherwise, it is added to the committed list and enqueued.
+
+Once the job is processed it is removed from the committed list and can be queued again.
 
 ### Installation
     npm install redis-convoy
 
-### Usage
+##### Options
 
-#### Options
+* **Concurrency**: Maximum number of jobs that can be processing at the same time
+* **Job Timeout**: If your function takes more than this time to process a job, the job will be marked as failed
 
+Example:
 ```javascript
 var opts = {
   concurrency: 10, // Spawn up to a maximum of 10 concurrent workers
   jobTimeout: 2000 // If a worker does not finish within this time (in ms), its job will be considered failed
 };
 ```
+
+### Usage
 
 ```javascript
 var Convoy = require('redis-convoy');
@@ -41,25 +48,51 @@ q.addJob(job);
 
 // Set up a worker
 q.process(function(job, done){
-	console.log(job);
-	done(); // or done('an error') if error during processing of the job
+  console.log(job);
+  done(); // or done('an error') if error during processing of the job
 });
 
 // Clear out jammed jobs
 q.jamGuard(5, function(err, jammedJobs){
   console.log(jammedJobs);
 });
+
+// Run off some queue stats
+var logCounter = function(err, count){
+  console.log(count);
+};
+
+q.countQueued(logCounter);
+q.countCommitted(logCounter);
+q.countProcessing(logCounter);
+q.countFailed(logCounter);
 ```
 
+### Definitions
+
+ Term                  | Description
+-----------------------|------------
+ **Queue**             | A Redis list containing unique job IDs
+ **Committed list**    | A Redis set containing unnique job IDs. Ensures each job is only queued once
+ **Processing list**   | A Redis zset containing job ID as member and the unix timestamp of when the job started processing as its score
+ **Failed list**       | A Redis zset containing job ID as member and the number of times it failed to process as its score
+
+
+
 ### Running tests
-Make sure you have a local redis running on localhost:6379 (or change these settings in config/default.js), then run:
+Make sure you have a local Redis running on localhost:6379 (or change these settings in config/default.js). *Warning*: The tests will flush everything in the target Redis DB.
+
+As always, make sure you have run `npm install` to install dependencies first.
+
+Run:
 
     make test
 
 ### TODO
 Potential features to come:
 
-* Job payload: Store additional data with a job. ProTip: in the meantime try `javascript var jobID = JSON.stringify(obj);`
+* Job payload: Store additional data with a job. ProTip: in the meantime try `var jobID = JSON.stringify(obj);`
+* Better docs for and use of failed job logs
 
 #### Inspiration
 
