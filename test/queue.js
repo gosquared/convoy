@@ -99,6 +99,7 @@ describe('Enqueing jobs', function(done){
 
 describe('Processing jobs', function(){
   var q, job, processed;
+
   before(function(done){
     q = Convoy.createQueue('the22ndLetter');
     var returned = false;
@@ -230,6 +231,7 @@ describe('When a job gets jammed', function(){
         should.not.exist(err);
         should.exist(jammedJobs);
         jammedJobs.should.have.length(1);
+        clearTimeout(q.jamGuardTimeout);
         done();
       });
     });
@@ -276,6 +278,37 @@ describe('When multiple convoys process the same queue', function(){
   });
 });
 
+describe('When a job is not completed within the configured timeout', function(){
+  var q, job, processed;
+  var jobTimeout = 1;
+
+  before(function(done){
+    var opts = {
+      jobTimeout: jobTimeout
+    };
+
+    q = Convoy.createQueue('timeless', opts);
+    q.addJob(new Convoy.Job(1));
+    q.startProcessing(function(job, jobDone){
+      q.workersRunning.should.equal(1);
+      setTimeout(function(){
+        jobDone(null, function(){
+          done();
+        });
+      }, jobTimeout + 5);
+    });
+  });
+
+  it('considers a job failed', function(done){
+    q.countFailed(function(err, count){
+      should.not.exist(err);
+      count.should.equal(1);
+      done();
+    });
+    q.workersRunning.should.equal(0);
+  });
+});
+
 describe('stats', function(){
   function testCount(done, err, count){
     should.not.exist(err);
@@ -286,6 +319,10 @@ describe('stats', function(){
   it('can count queued', function(done){
     var q = Convoy.createQueue('q');
     q.countQueued(testCount.bind(this, done));
+  });
+  it('can count committed', function(done){
+    var q = Convoy.createQueue('q');
+    q.countCommitted(testCount.bind(this, done));
   });
   it('can count processing', function(done){
     var q = Convoy.createQueue('q');
