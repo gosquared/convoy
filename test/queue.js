@@ -32,6 +32,15 @@ describe('Setting up a queue', function(){
     q.close(done);
   });
 
+  it('can close the queue when processing and queue empty (slow test)', function(done){
+    var q = Convoy.createQueue('mrPowers');
+    q.startProcessing(function(){
+      throw new Error('You shouldnt see this message');
+    });
+
+    q.close(done);
+  });
+
   it('can stop processing the queue', function(done){
     var q = Convoy.createQueue('duckies');
     var received = 0;
