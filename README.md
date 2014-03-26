@@ -47,7 +47,7 @@ var job = new Convoy.Job(jobID);
 q.addJob(job);
 
 // Set up a worker
-q.process(function(job, done){
+q.processJob(function(job, done){
   console.log(job);
   done(); // or done('an error') if error during processing of the job
 });
